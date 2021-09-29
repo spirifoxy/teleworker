@@ -69,7 +69,7 @@ Client and server keys and certificates will be either presented in the reposito
 
 mTLS authentication will be used. As we don't want to introduce some sophisticated auth system in this exercise we might consider all the users with valid certificates to be authorized within the system. 
 
-In order to identify the user and to connect him to his jobs we might extract CN and use it as a user login within the system. 
+In order to identify the user we might extract CN and use it as a user login within the system. Later this login might be used to determine whether the user is capable of managing a task, i.e. all attempts to terminate or get status of the job created by another user will be declined.  
 
 ## Testing
 
