@@ -15,13 +15,18 @@ TBD
 Everything can be managed via the command line, no advance preparation is required.
 
 ### Start a job
-Starts a job, returns uuid. Optional flags are available for limiting the job resources:
+Starts a job, returns uuid. 
+```
+$ teleworker start echo 123
+$ db759134-e42e-4b39-8c88-c2359219b9ed
+```
 
+Optional flags are available for limiting the job resources:
 * **mem** - memory limit in megabytes
 * **cpu** - cpu share in percents (1-100)
 * **io** - I/O access proportion in percents (1-100)
 ```
-$ teleworker start
+$ teleworker start -mem=10 -cpu=5 echo 123
 $ db759134-e42e-4b39-8c88-c2359219b9ed
 ```
 
@@ -44,8 +49,8 @@ Gets all the logs that the task produced since the moment it was started and kee
 $ teleworker stream <uuid>
 $ ...
 ```
-Optional flag **--err** if provided will trigger the start of streaming of stderr instead of stdout.
+Optional flag **err** if provided will trigger the start of streaming of stderr instead of stdout.
 ```
-$ teleworker stream --err <uuid>
+$ teleworker stream -err <uuid>
 $ ...
 ```
