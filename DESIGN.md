@@ -65,8 +65,17 @@ Some examples can be found under the Usage section of the readme file.
 
 ## Security
 
-Client and server keys and certificates will be either presented in the repository or generated using the provided script. 
+TLS of version 1.3 will be used as it will provide faster and more secure connections. Older versions won't be supported. 
+As the TLS 1.3 ciphersuites are not configurable the following default list will be used:
+```
+TLS_AES_128_GCM_SHA256
+TLS_AES_256_GCM_SHA384
+TLS_CHACHA20_POLY1305_SHA256
+```
+The CA certificate will be either presented in the repository or generated using the provided script.
+The same goes for the client and server keys and certificates, which will be signed using the mentioned CA and provided for local use.
 
+We will use ed25519 algorithm to generate the private keys, which later will be used along with the certificates for setting up the gRPC server and client connection respectively.
 mTLS authentication will be used. As we don't want to introduce some sophisticated auth system in this exercise we might consider all the users with valid certificates to be authorized within the system. 
 
 In order to identify the user we might extract CN and use it as a user login within the system. Later this login might be used to determine whether the user is capable of managing a task, i.e. all attempts to terminate or get status of the job created by another user will be declined.  
