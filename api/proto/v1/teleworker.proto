@@ -11,11 +11,6 @@ service TeleWorker {
   rpc Stream(StreamRequest) returns (stream StreamResponse);
 }
 
-// UUID is used as a job identifier.
-message UUID {
-  string value = 1;
-}
-
 // JobStatus represents a status of each job.
 // STARTING - the job was created, but has't started yet.
 // ALIVE - the job runs successfully at the moment.
@@ -42,12 +37,12 @@ message StartRequest {
 }
 
 message StartResponse {
-  UUID job_id = 1;
+  string job_id = 1;
 }
 
 // StopRequest forces the termination of the job.
 message StopRequest {
-  UUID job_id = 1;
+  string job_id = 1;
 }
 
 // StopResponse is here for the sake of consistency and for the
@@ -55,7 +50,7 @@ message StopRequest {
 message StopResponse { }
 
 message StatusRequest {
-  UUID job_id = 1;
+  string job_id = 1;
 }
 
 // StatusResponse provides the status of the job in the system
@@ -69,8 +64,10 @@ message StatusResponse {
   int32 exit_code = 5;
 }
 
+// StreamRequest is a request sent to start streaming the task output.
+// We stream either stdout or stderr based on whether stream_errors is true. 
 message StreamRequest {
-  UUID job_id = 1;
+  string job_id = 1;
   bool stream_errors = 2;
 }
 

@@ -44,3 +44,8 @@ Gets all the logs that the task produced since the moment it was started and kee
 $ teleworker stream <uuid>
 $ ...
 ```
+Optional flag **--err** if provided will trigger the start of streaming of stderr instead of stdout.
+```
+$ teleworker stream --err <uuid>
+$ ...
+```
