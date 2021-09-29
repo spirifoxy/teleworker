@@ -16,16 +16,6 @@ message UUID {
   string value = 1;
 }
 
-// StopSignal is a signal to be sent in order to stop a job.
-// TERM - signal to terminate the job. Yet, might fail to do that.
-// SIGINT - try to stop execution softly by requesting interruption. Might fail.
-// KILL - forcing the termination of the job. Terminates the job for sure.
-enum StopSignal {
-  TERM = 0;
-  SIGINT = 1;
-  KILL = 2;
-}
-
 // JobStatus represents a status of each job.
 // STARTING - the job was created, but has't started yet.
 // ALIVE - the job runs successfully at the moment.
@@ -55,11 +45,9 @@ message StartResponse {
   UUID job_id = 1;
 }
 
-// StopRequest is either trying to stop or forcing
-// the termination of the job based on the sent signal.
+// StopRequest forces the termination of the job.
 message StopRequest {
   UUID job_id = 1;
-  StopSignal signal = 2;
 }
 
 // StopResponse is here for the sake of consistency and for the

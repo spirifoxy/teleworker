@@ -54,12 +54,7 @@ The following set of flags is used for this purpose, user can set the required l
     * **mem** - memory limit for a job in megabytes
     * **cpu** - cpu share in percents (1-100) available to this job
     * **io** - proportion of I/O access (1-100) available to this job
-1. Stop the job: a user is required to provide a job ID for the job termination. There are going to be 3 modes of this command:
-    * In default mode (when only job ID is provided) _SIGTERM_ is used to terminate a job. 
-    * If the user provides a **force** flag it triggers _KILL_ to be sent for the command termination.
-    It can be useful if, for example, it takes too long for a command to finish in normal mode, if the user wants to be sure the command terminates as soon as possible or if it is not possible to terminate it otherwise for some reason.
-    * If the user provides a **gentle** flag it triggers _SIGINT_ to be sent.
-    It might be essential to finish some commands in these modes in order to trigger whatever functionality they might have set up to be executed on the interruption request.
+1. Stop the job: a user is required to provide a job ID for the job termination. The default behavior is to kill the task as it will trigger _SIGKILL_ to be sent for the command termination.
 1. Get the status of the job. Requires only the job ID to be sent, the user gets in return the job status, all the job resource limits set upon job creation and exit code (applies only if the job is in the finished or stopped status)
 1. Stream the output of the job. Requires only the job ID, starts the stream of the job stdout - the user gets everything that was written by the command until that moment and continues to get the command logs in real time until either the job is finished/terminated or the user interrupts the stream command execution (CTRL-C).
 It is a completely valid scenario to request the logs of both stdout and stderr (or even stdout and once again stdout) of the same job at the same time. 

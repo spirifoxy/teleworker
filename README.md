@@ -26,14 +26,9 @@ $ db759134-e42e-4b39-8c88-c2359219b9ed
 ```
 
 ### Stop some job
-For the default behavior (terminating the task by sending SIGTERM):
+Stops the job execution. The default behavior is to kill the task (SIGKILL), so you must be aware that even if the command has some clean up set on interruption request - it will be ignored.
 ```
 $ teleworker stop <uuid>
-```
-Flags **--gentle** and **--force** can be used to terminate the task by sending an interruption request (SIGINT) and killing it (SIGKILL) respectively:
-```
-$ teleworker stop --gentle <uuid>
-$ teleworker stop --force <uuid>
 ```
 
 ### Get the status of some job
