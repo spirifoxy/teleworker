@@ -15,9 +15,9 @@ TBD
 Everything can be managed via the command line, no advance preparation is required.
 
 ### Start a job
-Starts a job, returns uuid. 
+Starts a job, returns uuid. **command** flag is required. You can provide argument list separated by space at the end.
 ```
-$ teleworker start echo 123
+$ teleworker start -command=echo 123
 $ db759134-e42e-4b39-8c88-c2359219b9ed
 ```
 
@@ -26,7 +26,14 @@ Optional flags are available for limiting the job resources:
 * **cpu** - cpu share in percents (1-100)
 * **io** - I/O access proportion in percents (1-100)
 ```
-$ teleworker start -mem=10 -cpu=5 echo 123
+$ teleworker start -mem=10 -cpu=5 -command=cat "/proc/cpuinfo"
+$ db759134-e42e-4b39-8c88-c2359219b9ed
+```
+
+For more complicated scenarios it is also possible to pipe commands. For example, you can send _bash_ as a command and provide the list of your arguments in the end. Be aware that if your argument looks like a flag you need to provide a terminator symbol before providing arguments.
+See the example:
+```
+$ teleworker start -command=bash -- "-c" "cat /proc/cpuinfo | egrep '^model name' | uniq"
 $ db759134-e42e-4b39-8c88-c2359219b9ed
 ```
 

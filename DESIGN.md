@@ -48,6 +48,8 @@ Server will extensively use the library and will probably have only some basic a
 Client is a simple CLI for the communication with the server. It will allow running a set of commands against the server:
 
 1. Start a job: passes a command provided by the user for direct execution on the server side. The ID of the job will be sent in response.
+It is required to set the command using **command** flag.
+Arguments are optional, a list of arguments must be split by spaces and provided at the end of the line. For complicated usage scenarios like piping commands take a look at the examples section of readme.
 If the user wants to limit resources that will be available to a job upon execution he is required to do it while sending a start request.
 No update functionality will be provided in terms of resources control - if the user wants to add or change some limits he is required to stop the job and create a new one with the required parameters.
 The following set of flags is used for this purpose, user can set the required limit in one of the groups:
@@ -55,7 +57,8 @@ The following set of flags is used for this purpose, user can set the required l
     * **cpu** - cpu share in percents (1-100) available to this job
     * **io** - proportion of I/O access (1-100) available to this job
 1. Stop the job: a user is required to provide a job ID for the job termination. The default behavior is to kill the task as it will trigger _SIGKILL_ to be sent for the command termination.
-1. Get the status of the job. Requires only the job ID to be sent, the user gets in return the job status, all the job resource limits set upon job creation and exit code (applies only if the job is in the finished or stopped status)
+1. Get the status of the job. Requires only the job ID to be sent, the user gets in return the job status, all the job resource limits set upon job creation and exit code (applies only if the job is in the finished or stopped status).
+It is guaranteed that the task will be terminated during the request.
 1. Stream the output of the job. Requires only the job ID, starts the stream of the job stdout - the user gets everything that was written by the command until that moment and continues to get the command logs in real time until either the job is finished/terminated or the user interrupts the stream command execution (CTRL-C).
 It is a completely valid scenario to request the logs of both stdout and stderr (or even stdout and once again stdout) of the same job at the same time. 
     * **err** - optional flag, if provided starts the stream of stderr instead of stdout

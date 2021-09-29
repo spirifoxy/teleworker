@@ -25,15 +25,17 @@ enum JobStatus {
 }
 
 // StartRequest is a request sent to start a job, contains:
-// a command line provided by user;
+// a command provided by user;
+// optional command arguments;
 // memory limit for the job in megabytes;
 // cpu weight percentage;
 // i/o weight percentage.
 message StartRequest {
-  string command_line = 1;
-  int32 memory_limit_mb = 2;
-  int32 cpu_weight = 3;
-  int32 io_weight = 4;
+  string command = 1;
+  repeated string args = 2;
+  int32 memory_limit_mb = 3;
+  int32 cpu_weight = 4;
+  int32 io_weight = 5;
 }
 
 message StartResponse {
