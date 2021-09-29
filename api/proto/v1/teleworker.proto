@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+option go_package = "internal/api/v1";
+
+package v1;
+
+service TeleWorker {
+  rpc Start(StartRequest) returns (StartResponse);
+  rpc Stop(StopRequest) returns (StopResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
+  rpc Stream(StreamRequest) returns (stream StreamResponse);
+}
+
+// UUID is used as a job identifier.
+message UUID {
+  string value = 1;
+}
+
+// StopSignal is a signal to be sent in order to stop a job.
+// TERM - signal to terminate the job. Yet, might fail to do that.
+// SIGINT - try to stop execution softly by requesting interruption. Might fail.
+// KILL - forcing the termination of the job. Terminates the job for sure.
+enum StopSignal {
+  TERM = 0;
+  SIGINT = 1;
+  KILL = 2;
+}
+
+// JobStatus represents a status of each job.
+// STARTING - the job was created, but has't started yet.
+// ALIVE - the job runs successfully at the moment.
+// FINISHED - the job finished its execution. 
+// STOPPED - the job was stopped by the user.
+enum JobStatus {
+  UNKNOWN = 0;
+  STARTING = 1;
+  ALIVE = 2;
+  FINISHED = 3;
+  STOPPED = 4;
+}
+
+// StartRequest is a request sent to start a job, contains:
+// a command line provided by user;
+// memory limit for the job in megabytes;
+// cpu weight percentage;
+// i/o weight percentage.
+message StartRequest {
+  string job = 1;
+  int32 memory_limit_mb = 2;
+  int32 cpu_weight = 3;
+  int32 io_weight = 4;
+}
+
+message StartResponse {
+  UUID job_id = 1;
+}
+
+// StopRequest is either trying to stop or forcing
+// the termination of the job based on the sent signal.
+message StopRequest {
+  UUID job_id = 1;
+  StopSignal signal = 2;
+}
+
+// StopResponse is here for the sake of consistency and for the
+// potential flexibility of extension in the future.
+message StopResponse { }
+
+message StatusRequest {
+  UUID job_id = 1;
+}
+
+// StatusResponse provides the status of the job in the system
+// as well as all the configuration data provided on start
+// and also an exit code in case if job is finished. 
+message StatusResponse {
+  JobStatus status = 1;
+  int32 memory_limit_mb = 2;
+  int32 cpu_limit_percentage = 3;
+  int32 io_limit_percentage = 4;
+  int32 exit_code = 5;
+}
+
+message StreamRequest {
+  UUID job_id = 1;
+  bool stream_errors = 2;
+}
+
+// StreamResponse is used for streaming either of stdout of the job
+// specified by request ID or stderr
+message StreamResponse {
+  bytes out_stream = 1;
+}
