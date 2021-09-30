@@ -40,8 +40,25 @@ When the job is finished or terminated we also remove the related directories.
 
 ## Server
 
-Server will extensively use the library and will probably have only some basic auth logic (see [Security](#security)) and a layer of logic for storing the current system state in memory.  
+Server will extensively use the library and will probably have only some basic auth logic (see [Security](#security)) and a layer of logic for storing the current system state in memory.
 
+Basic flow of starting a new job looks like this:
+
+1. Server receives the _start_ command sent by a user with at least _command_ provided to execute.
+1. User is authorized and we extract the login data.
+1. With _exec.Command_ we create the command structure using optional arguments if provided in the request.
+1. We need to process the output of the task, so the following is required (both for stdout and stderr):
+
+    * A pipe is created, it will be connected to the command's out when the command starts.
+    * We set up a broker and a buffer that will contain all the data produced by the task.
+    * When the command will start we set up two goroutines - in one of them we read the pipe and publish it's content to the broker. Another one receives the messages from broker and writes them into the buffer.
+
+1. The user login is set as a creator of the task. While later managing the task, it will be decided if the user is legible to perform requests based on the login assigned to the task.
+1. The job is started.
+1. The PID needs to be written either in _cgroup/(cpu/blkio/memory)/teleworker/cgroup.procs_ if no limits were provided, or to _teleworker/UUID/cgroup.procs_ if at least one of mem/cpu/io limits is set by the user.
+1. We check that everything went as expected by parsing the _/proc/PID/cgroup_ file. The _teleworker_ group should be presented in there if the limits were not provided, _teleworker/UUID_ otherwise.
+1. The job is stored in the server memory storage.
+1. UUID of the job returned back to the user
 
 ## Client
 
