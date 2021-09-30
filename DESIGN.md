@@ -54,8 +54,8 @@ Basic flow of starting a new job looks like this:
     * When the command will start we set up two goroutines - in one of them we read the pipe and publish it's content to the broker. Another one receives the messages from broker and writes them into the buffer.
 
 1. The user login is set as a creator of the task. While later managing the task, it will be decided if the user is legible to perform requests based on the login assigned to the task.
-1. The job is started.
-1. The PID needs to be written either in _cgroup/(cpu/blkio/memory)/teleworker/cgroup.procs_ if no limits were provided, or to _teleworker/UUID/cgroup.procs_ if at least one of mem/cpu/io limits is set by the user.
+1. **cgexec** tool will be used in order to run the task in the related cgroup - _/teleworker_ if no limits were provided, or _teleworker/UUID_ if at least one of mem/cpu/io limits is set by the user.
+We assume that cgexec is already in the PATH when the server starts. 
 1. We check that everything went as expected by parsing the _/proc/PID/cgroup_ file. The _teleworker_ group should be presented in there if the limits were not provided, _teleworker/UUID_ otherwise.
 1. The job is stored in the server memory storage.
 1. UUID of the job returned back to the user
