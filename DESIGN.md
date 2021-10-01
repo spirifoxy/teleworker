@@ -54,8 +54,10 @@ Basic flow of starting a new job looks like this:
     * When the command will start we set up two goroutines - in one of them we read the pipe and publish it's content to the broker. Another one receives the messages from broker and writes them into the buffer.
 
 1. The user login is set as a creator of the task. While later managing the task, it will be decided if the user is legible to perform requests based on the login assigned to the task.
-1. **cgexec** tool will be used in order to run the task in the related cgroup - _/teleworker_ if no limits were provided, or _teleworker/UUID_ if at least one of mem/cpu/io limits is set by the user.
-We assume that cgexec is already in the PATH when the server starts. 
+1. Upon the start the task has to be placed in the related cgroup - _/teleworker_ if no limits were provided, or _teleworker/UUID_ if at least one of mem/cpu/io limits is set by the user.
+In order to do that the server will run _/proc/self/exe_ with all the required data (the user command, arguments, etc.) starting another process of itself.
+In case of such a start it is determined right in the beginning of the execution that it is no "ordinary" server launch. Instead of that, we put the PID to the related cgroup and after that we execute the user's task - that is the only job of this process.
+It will be terminated when the user's command finishes it execution or killed directly by the user request. 
 1. We check that everything went as expected by parsing the _/proc/PID/cgroup_ file. The _teleworker_ group should be presented in there if the limits were not provided, _teleworker/UUID_ otherwise.
 1. The job is stored in the server memory storage.
 1. UUID of the job returned back to the user
@@ -98,7 +100,7 @@ The same goes for the client and server keys and certificates, which will be sig
 We will use ed25519 algorithm to generate the private keys, which later will be used along with the certificates for setting up the gRPC server and client connection respectively.
 mTLS authentication will be used. As we don't want to introduce some sophisticated auth system in this exercise we might consider all the users with valid certificates to be authorized within the system. 
 
-In order to identify the user we might extract CN and use it as a user login within the system. Later this login might be used to determine whether the user is capable of managing a task, i.e. all attempts to terminate or get status of the job created by another user will be declined.  
+In order to identify the user we might extract CN and use it as a user login within the system. For the upcoming requests this login will be used to determine whether the user is capable of managing a task, i.e. all attempts to terminate or get status of the job created by another user will be declined.  
 
 ## Testing
 
