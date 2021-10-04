@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+option go_package = "internal/api/v1";
+
+package v1;
+
+service TeleWorker {
+  rpc Start(StartRequest) returns (StartResponse);
+  rpc Stop(StopRequest) returns (StopResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
+  rpc Stream(StreamRequest) returns (stream StreamResponse);
+}
+
+// JobStatus represents a status of each job.
+// STARTING - the job was created, but has't started yet.
+// ALIVE - the job runs successfully at the moment.
+// FINISHED - the job finished its execution. 
+// STOPPED - the job was stopped by the user.
+enum JobStatus {
+  UNKNOWN = 0;
+  STARTING = 1;
+  ALIVE = 2;
+  FINISHED = 3;
+  STOPPED = 4;
+}
+
+// StartRequest is a request sent to start a job, contains:
+// a command provided by user;
+// optional command arguments;
+// memory limit for the job in megabytes;
+// cpu weight percentage;
+// i/o weight percentage.
+message StartRequest {
+  string command = 1;
+  repeated string args = 2;
+  int32 memory_limit_mb = 3;
+  int32 cpu_weight = 4;
+  int32 io_weight = 5;
+}
+
+message StartResponse {
+  string job_id = 1;
+}
+
+// StopRequest forces the termination of the job.
+message StopRequest {
+  string job_id = 1;
+}
+
+// StopResponse is here for the sake of consistency and for the
+// potential flexibility of extension in the future.
+message StopResponse { }
+
+message StatusRequest {
+  string job_id = 1;
+}
+
+// StatusResponse provides the status of the job in the system
+// as well as all the configuration data provided on start
+// and also an exit code in case if job is finished. 
+message StatusResponse {
+  JobStatus status = 1;
+  int32 memory_limit_mb = 2;
+  int32 cpu_limit_percentage = 3;
+  int32 io_limit_percentage = 4;
+  int32 exit_code = 5;
+}
+
+// StreamRequest is a request sent to start streaming the task output.
+// We stream either stdout or stderr based on whether stream_errors is true. 
+message StreamRequest {
+  string job_id = 1;
+  bool stream_errors = 2;
+}
+
+// StreamResponse is used for streaming either of stdout of the job
+// specified by request ID or stderr
+message StreamResponse {
+  bytes out_stream = 1;
+}
