@@ -62,18 +62,6 @@ type JobState struct {
 	Limits   *Limits
 }
 
-// StatusName returns user friendly name for JobStatus
-// See api.JobStatus_name for code to string mapping
-func (js *JobState) StatusName() string {
-	name, ok := api.JobStatus_name[int32(js.Status)]
-	if !ok {
-		// Fallback to the default UNKNOWN status,
-		// but should never happen in reality
-		return api.JobStatus_name[0]
-	}
-	return name
-}
-
 type Job struct {
 	ID          uuid.UUID
 	UserCommand string
