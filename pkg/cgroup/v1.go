@@ -151,7 +151,10 @@ func (s *V1Service) appendToFile(filePath, value string) error {
 	return nil
 }
 
-// Remove removes the subgroup by provided id
+// Remove removes the subgroup by provided id.
+// As removal might fail because the directories won't be
+// empty immediately after the job is terminated, it makes
+// sense to retry the removal with pauses in case of the error
 func (s *V1Service) Remove(groupID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

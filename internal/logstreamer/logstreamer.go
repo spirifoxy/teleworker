@@ -2,8 +2,11 @@ package logstreamer
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -43,16 +46,25 @@ func (s *LogStreamer) readLogs() {
 		if n > 0 {
 			s.broker.Send(pack[:n])
 		}
-		if err == io.EOF {
+
+		if errors.Is(err, io.EOF) {
 			// There is nothing left to read now, but the task is still
 			// running - so just chill for a second and try again
 			time.Sleep(time.Second)
 			continue
+		} else if errors.Is(err, os.ErrClosed) {
+			// This is the expected behavior - ending up here means that
+			// that task was either finished or terminated and the reader
+			// was closed, so we just break the routine
+			break
 		} else if err != nil {
-			// We end up here in case the task is finished and the reader
-			// is closed. It might be that something unexpected happened,
-			// but anyway shutting down this goroutine as we aren't going
-			// anywhere from here
+			// Something unexpected happened. Write the error to the buffer
+			// so if the client will run the stream - he will see the problem
+			// and might restart the job.
+			// Should hardly ever happen
+			readError := fmt.Sprintf("unexpected error while reading the task output: %v\n", err)
+			log.Println(readError)
+			s.broker.Send([]byte(readError))
 			break
 		}
 	}
@@ -82,8 +94,8 @@ func (s *LogStreamer) Stream(ongoing bool, ctx context.Context) <-chan []byte {
 		for {
 			select {
 			case <-ctx.Done():
-				// If broker is not yet closed, i.e. the task is still alive
 				if sub != nil {
+					// If broker is not yet closed, i.e. the task is still alive
 					s.broker.Unsubscribe(sub)
 				}
 				return
@@ -96,7 +108,7 @@ func (s *LogStreamer) Stream(ongoing bool, ctx context.Context) <-chan []byte {
 				ch <- pack[:n]
 			}
 
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				// If the task is not alive anymore and yet somebody
 				// wants to get logs - when we reach EOF we might as well
 				// close the stream and exit
@@ -110,9 +122,11 @@ func (s *LogStreamer) Stream(ongoing bool, ctx context.Context) <-chan []byte {
 				// add something to the buffer
 				time.Sleep(time.Second)
 				continue
-
 			} else if err != nil {
-				log.Printf("unexpected error happened while streaming: %v", err)
+				// Should hardly ever happen
+				streamError := fmt.Sprintf("unexpected error happened while streaming: %v\n", err)
+				log.Println(streamError)
+				s.broker.Send([]byte(streamError))
 				break
 			}
 		}
