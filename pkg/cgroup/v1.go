@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -154,12 +153,6 @@ func (s *V1Service) appendToFile(filePath, value string) error {
 
 // Remove removes the subgroup by provided id
 func (s *V1Service) Remove(groupID string) error {
-	// As removal might fail because the directories won't be
-	// empty immediately after the job is terminated,
-	// we make several attempts removing them adding pauses
-	// in case of failure
-	const attempts = 5
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -168,22 +161,13 @@ func (s *V1Service) Remove(groupID string) error {
 		// If, for example, removal for some reason won't work correctly and throw
 		// error in the middle of processing, it can be simply launched again later
 		// since any attempt to remove non-existent directory will be ignored
-
-		for i := 0; ; i++ {
-			err := os.RemoveAll(p)
-			if err == nil {
-				break
+		err := os.RemoveAll(p)
+		if err != nil {
+			return &RemoveError{
+				group:     groupID,
+				subsystem: sys.name,
+				err:       err,
 			}
-
-			if i >= (attempts - 1) {
-				return &RemoveError{
-					group:     groupID,
-					subsystem: sys.name,
-					err:       err,
-				}
-			}
-
-			time.Sleep(time.Second)
 		}
 	}
 
