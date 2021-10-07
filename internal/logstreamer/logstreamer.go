@@ -39,7 +39,10 @@ func NewLogStreamer(reader io.ReadCloser) *LogStreamer {
 func (s *LogStreamer) readLogs() {
 	for {
 		pack := make([]byte, defaultBufSize)
-		_, err := s.reader.Read(pack)
+		n, err := s.reader.Read(pack)
+		if n > 0 {
+			s.broker.Send(pack[:n])
+		}
 		if err == io.EOF {
 			// There is nothing left to read now, but the task is still
 			// running - so just chill for a second and try again
@@ -52,7 +55,6 @@ func (s *LogStreamer) readLogs() {
 			// anywhere from here
 			break
 		}
-		s.broker.Send(pack)
 	}
 }
 
@@ -89,7 +91,10 @@ func (s *LogStreamer) Stream(ongoing bool, ctx context.Context) <-chan []byte {
 			}
 
 			pack := make([]byte, defaultBufSize)
-			_, err := bufCopy.Read(pack)
+			n, err := bufCopy.Read(pack)
+			if n > 0 {
+				ch <- pack[:n]
+			}
 
 			if err == io.EOF {
 				// If the task is not alive anymore and yet somebody
@@ -110,8 +115,6 @@ func (s *LogStreamer) Stream(ongoing bool, ctx context.Context) <-chan []byte {
 				log.Printf("unexpected error happened while streaming: %v", err)
 				break
 			}
-
-			ch <- pack
 		}
 	}()
 
