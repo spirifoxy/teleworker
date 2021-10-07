@@ -13,7 +13,7 @@ func (j *Job) Start() error {
 	defer j.mu.Unlock()
 
 	if j.state.Status != api.JobStatus_STARTING {
-		return fmt.Errorf("not possible to start the job: unexpected status %s on start", j.state.StatusName())
+		return fmt.Errorf("not possible to start the job: unexpected status %s on start", j.state.Status.String())
 	}
 
 	err := j.cmd.Start()
@@ -46,8 +46,6 @@ func (j *Job) wait() {
 
 func (j *Job) Stop() error {
 	j.mu.Lock()
-	defer j.mu.Unlock()
-
 	if j.state.Status != api.JobStatus_ALIVE {
 		return fmt.Errorf("not possible to stop the job as it's not alive; please check the status")
 	}
@@ -56,13 +54,26 @@ func (j *Job) Stop() error {
 	if err != nil {
 		return fmt.Errorf("not possible to stop the task: %w", err)
 	}
+	j.mu.Unlock() // Unlock here in order not to lock forever in the wait call
 
 	// Wait for the goroutine launched upon the task creation to finish.
 	// Then override the status from finished to stopped
-	<-j.done
+	select {
+	case <-j.done:
+		j.mu.Lock()
+		defer j.mu.Unlock()
+
+		j.state.Status = api.JobStatus_STOPPED
+		j.state.ExitedAt = time.Now()
+
+		if j.state.ExitErr != nil {
+			return fmt.Errorf("error while trying to stop the task: %w", j.state.ExitErr)
+		}
+	case <-time.After(10 * time.Second):
+		return fmt.Errorf("error while trying to stop the task: timeout exceeded")
+	}
 	j.state.Status = api.JobStatus_STOPPED
 	j.state.ExitedAt = time.Now()
-
 	if j.state.ExitErr != nil {
 		return fmt.Errorf("error while trying to stop the task: %w", j.state.ExitErr)
 	}
