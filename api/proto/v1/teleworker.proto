@@ -4,6 +4,8 @@ option go_package = "internal/api/v1";
 
 package v1;
 
+import "validate/validate.proto";
+
 service TeleWorker {
   rpc Start(StartRequest) returns (StartResponse);
   rpc Stop(StopRequest) returns (StopResponse);
@@ -31,11 +33,15 @@ enum JobStatus {
 // cpu weight percentage;
 // i/o weight percentage.
 message StartRequest {
-  string command = 1;
+  // command should not be empty
+  string command = 1 [(validate.rules).string = {min_len: 1}];
   repeated string args = 2;
-  int32 memory_limit_mb = 3;
-  int32 cpu_weight = 4;
-  int32 io_weight = 5;
+  // memory is either empty or greater then 0
+  int32 memory_limit_mb = 3 [(validate.rules).int32 = {ignore_empty: true, gt: 0}];
+  // cpu is either empty or in [1..100]
+  int32 cpu_weight = 4 [(validate.rules).int32 = {ignore_empty: true, gte: 1, lte: 100}];
+  // io is either empty or in [1..100]
+  int32 io_weight = 5 [(validate.rules).int32 = {ignore_empty: true, gte: 1, lte: 100}];
 }
 
 message StartResponse {
@@ -44,7 +50,9 @@ message StartResponse {
 
 // StopRequest forces the termination of the job.
 message StopRequest {
-  string job_id = 1;
+  // Keeping the validation as simple as possible.
+  // Lets just validate that the string at least looks like uuid by it's length :)
+  string job_id = 1 [(validate.rules).string.len = 36];
 }
 
 // StopResponse is here for the sake of consistency and for the
@@ -52,7 +60,7 @@ message StopRequest {
 message StopResponse { }
 
 message StatusRequest {
-  string job_id = 1;
+  string job_id = 1 [(validate.rules).string.len = 36];
 }
 
 // StatusResponse provides the status of the job in the system
@@ -69,7 +77,7 @@ message StatusResponse {
 // StreamRequest is a request sent to start streaming the task output.
 // We stream either stdout or stderr based on whether stream_errors is true. 
 message StreamRequest {
-  string job_id = 1;
+  string job_id = 1 [(validate.rules).string.len = 36];
   bool stream_errors = 2;
 }
 
