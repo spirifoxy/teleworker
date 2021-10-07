@@ -28,6 +28,8 @@ func (j *Job) Start() error {
 
 func (j *Job) wait() {
 	err := j.cmd.Wait()
+
+	j.mu.Lock()
 	exitCode := j.cmd.ProcessState.ExitCode()
 	if err != nil && exitCode != -1 {
 		j.state.ExitErr = err
@@ -35,6 +37,7 @@ func (j *Job) wait() {
 
 	j.state.ExitCode = exitCode
 	j.state.Status = api.JobStatus_FINISHED
+	j.mu.Unlock()
 
 	j.outLogger.Close()
 	j.errLogger.Close()
