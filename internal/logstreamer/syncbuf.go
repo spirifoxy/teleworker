@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-// SyncBuf is basically a bugger with locks and
-// update from broker subscriber
+// SyncBuf is basically a buffer with locks and
+// updates from broker subscriber
 type SyncBuf struct {
 	mu  sync.RWMutex
 	buf *bytes.Buffer
