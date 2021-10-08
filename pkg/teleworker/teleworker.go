@@ -72,11 +72,6 @@ func (j *Job) Stop() error {
 	case <-time.After(10 * time.Second):
 		return fmt.Errorf("error while trying to stop the task: timeout exceeded")
 	}
-	j.state.Status = api.JobStatus_STOPPED
-	j.state.ExitedAt = time.Now()
-	if j.state.ExitErr != nil {
-		return fmt.Errorf("error while trying to stop the task: %w", j.state.ExitErr)
-	}
 
 	return nil
 }
