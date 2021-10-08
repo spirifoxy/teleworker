@@ -1,7 +1,6 @@
 package teleworker
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -25,7 +24,9 @@ func InternalCallHandle() {
 	}
 	err := arg.Parse(&internal)
 	if err != nil {
-		fmt.Println(err)
+		// As no internal flags provided, this error
+		// means that this process starts the server, not
+		// user command, so we just return control
 		return
 	}
 

@@ -90,20 +90,25 @@ func (j *Job) tryRemovingCgroup() error {
 		return nil
 	}
 
-	const attempts = 5
 	cgroup := cg.NewV1Service()
-	for i := 0; ; i++ {
-		err := cgroup.Remove(j.ID.String())
-		if err == nil {
-			break
-		}
+	var err error
 
-		if i >= (attempts - 1) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err = cgroup.Remove(j.ID.String())
+			if err == nil {
+				return err
+			}
+		case <-ctx.Done():
 			return err
 		}
-		time.Sleep(time.Second)
 	}
-	return nil
 }
 
 func (j *Job) Status() *JobState {
