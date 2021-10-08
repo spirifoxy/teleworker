@@ -6,6 +6,7 @@ import (
 	"time"
 
 	api "github.com/spirifoxy/teleworker/internal/api/v1"
+	cg "github.com/spirifoxy/teleworker/pkg/cgroup"
 )
 
 func (j *Job) Start() error {
@@ -69,10 +70,39 @@ func (j *Job) Stop() error {
 		if j.state.ExitErr != nil {
 			return fmt.Errorf("error while trying to stop the task: %w", j.state.ExitErr)
 		}
+
+		err := j.tryRemovingCgroup()
+		if err != nil {
+			return err
+		}
 	case <-time.After(10 * time.Second):
 		return fmt.Errorf("error while trying to stop the task: timeout exceeded")
 	}
 
+	return nil
+}
+
+// tryRemovingCgroup makes several attempts on
+// cleaning up the job cgroup directory.
+// See cgroup.Remove for more details
+func (j *Job) tryRemovingCgroup() error {
+	if !j.Limited() {
+		return nil
+	}
+
+	const attempts = 5
+	cgroup := cg.NewV1Service()
+	for i := 0; ; i++ {
+		err := cgroup.Remove(j.ID.String())
+		if err == nil {
+			break
+		}
+
+		if i >= (attempts - 1) {
+			return err
+		}
+		time.Sleep(time.Second)
+	}
 	return nil
 }
 
