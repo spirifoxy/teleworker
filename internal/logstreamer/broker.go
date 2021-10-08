@@ -1,5 +1,7 @@
 package logstreamer
 
+import "sync"
+
 type BrokerSub struct {
 	load chan []byte
 }
@@ -7,31 +9,45 @@ type BrokerSub struct {
 // Broker is message broker consuming messages from one
 // source and delivering them to multiple subscribers
 type Broker struct {
+	mu   sync.Mutex
+	subs map[*BrokerSub]struct{}
+
 	listener chan []byte
-	sub      chan *BrokerSub
-	unsub    chan *BrokerSub
 	quit     chan struct{}
 }
 
 func NewBroker() *Broker {
 	return &Broker{
+		subs: make(map[*BrokerSub]struct{}),
+
 		listener: make(chan []byte, 1),
-		sub:      make(chan *BrokerSub, 1),
-		unsub:    make(chan *BrokerSub, 1),
 		quit:     make(chan struct{}),
 	}
 }
 
 func (b *Broker) Subscribe() *BrokerSub {
-	s := &BrokerSub{
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	sub := &BrokerSub{
 		load: make(chan []byte),
 	}
-	b.sub <- s
-	return s
+	b.subs[sub] = struct{}{}
+
+	return sub
 }
 
 func (b *Broker) Unsubscribe(s *BrokerSub) {
-	b.unsub <- s
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if _, ok := b.subs[s]; !ok {
+		// Check this as at this point we might already stop
+		// broadcasting and the channel is already closed
+		return
+	}
+	close(s.load)
+	delete(b.subs, s)
 }
 
 func (b *Broker) Send(msg []byte) {
@@ -43,23 +59,22 @@ func (b *Broker) Stop() {
 }
 
 func (b *Broker) Broadcast() {
-	subs := map[*BrokerSub]struct{}{}
 	for {
 		select {
 		case msg := <-b.listener:
 			// Resending the published message to all the subs
-			for sub := range subs {
+			b.mu.Lock()
+			for sub := range b.subs {
 				sub.load <- msg
 			}
-		case sub := <-b.sub:
-			subs[sub] = struct{}{}
-		case sub := <-b.unsub:
-			close(sub.load)
-			delete(subs, sub)
+			b.mu.Unlock()
 		case <-b.quit:
-			for sub := range subs {
+			b.mu.Lock()
+			for sub := range b.subs {
 				close(sub.load)
+				delete(b.subs, sub)
 			}
+			b.mu.Unlock()
 			return
 		}
 	}
