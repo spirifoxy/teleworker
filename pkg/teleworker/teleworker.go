@@ -48,11 +48,13 @@ func (j *Job) wait() {
 func (j *Job) Stop() error {
 	j.mu.Lock()
 	if j.state.Status != api.JobStatus_ALIVE {
+		j.mu.Unlock()
 		return fmt.Errorf("not possible to stop the job as it's not alive; please check the status")
 	}
 
 	err := j.cmd.Process.Kill()
 	if err != nil {
+		j.mu.Unlock()
 		return fmt.Errorf("not possible to stop the task: %w", err)
 	}
 	j.mu.Unlock() // Unlock here in order not to lock forever in the wait call
