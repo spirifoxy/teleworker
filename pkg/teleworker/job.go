@@ -137,6 +137,7 @@ func (j *Job) selfWrapCommand() *exec.Cmd {
 
 	callArgs := append(limitFlags, jobID)
 	callArgs = append(callArgs, userCommand)
+	callArgs = append(callArgs, "--")
 	callArgs = append(callArgs, j.UserArgs...)
 
 	return exec.Command(selfExe, callArgs...)
