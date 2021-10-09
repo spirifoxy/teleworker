@@ -120,16 +120,18 @@ func (j *Job) Status() *JobState {
 	return j.state
 }
 
-func (j *Job) StreamStdout(ctx context.Context) <-chan []byte {
+func (j *Job) StreamStdout() (<-chan []byte, context.CancelFunc) {
 	j.mu.RLock()
 	defer j.mu.RUnlock()
 
-	return j.outLogger.Stream(j.Active(), ctx)
+	ctx, streamCancel := context.WithCancel(context.Background())
+	return j.outLogger.Stream(j.Active(), ctx), streamCancel
 }
 
-func (j *Job) StreamStderr(ctx context.Context) <-chan []byte {
+func (j *Job) StreamStderr() (<-chan []byte, context.CancelFunc) {
 	j.mu.RLock()
 	defer j.mu.RUnlock()
 
-	return j.errLogger.Stream(j.Active(), ctx)
+	ctx, streamCancel := context.WithCancel(context.Background())
+	return j.errLogger.Stream(j.Active(), ctx), streamCancel
 }

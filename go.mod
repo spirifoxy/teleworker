@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/alexflint/go-arg v1.4.2
-	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/gofrs/uuid v4.0.0+incompatible
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.26.0
