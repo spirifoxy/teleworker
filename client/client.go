@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/alexflint/go-arg"
 	api "github.com/spirifoxy/teleworker/internal/api/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var args struct {
@@ -49,12 +53,40 @@ func connect() (*grpc.ClientConn, api.TeleWorkerClient) {
 	con, err := grpc.DialContext(
 		ctx,
 		address,
-		grpc.WithInsecure(),
 		grpc.WithBlock(),
+		credsOption(),
 	)
 	if err != nil {
 		log.Fatalf("could not connect to the server: %v", err)
 	}
 
 	return con, api.NewTeleWorkerClient(con)
+}
+
+func credsOption() grpc.DialOption {
+	const certPath = "../security/client-cert.pem"
+	const keyPath = "../security/client-key.pem"
+	const caPath = "../security/ca-cert.pem"
+
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		log.Fatalf("failed to load key pair: %s", err)
+	}
+	tlsCfg := &tls.Config{
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{cert},
+	}
+
+	ca, err := ioutil.ReadFile(caPath)
+	if err != nil {
+		log.Fatalf("failed to load ca certificate: %s", err)
+	}
+	caPool := x509.NewCertPool()
+	ok := caPool.AppendCertsFromPEM(ca)
+	if !ok {
+		log.Fatalln("error while parsing ca certificate")
+	}
+	tlsCfg.RootCAs = caPool
+
+	return grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg))
 }

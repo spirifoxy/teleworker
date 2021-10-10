@@ -72,7 +72,7 @@ type Job struct {
 	outLogger *ls.LogStreamer
 	errLogger *ls.LogStreamer
 
-	user  string
+	User  string
 	state *JobState
 
 	done chan struct{}
@@ -149,7 +149,7 @@ func (j *Job) selfWrapCommand() *exec.Cmd {
 // skipped by omitting this call
 func WithUsername(username string) Option {
 	return func(j *Job) {
-		j.user = username
+		j.User = username
 	}
 }
 

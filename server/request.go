@@ -6,9 +6,27 @@ import (
 
 	api "github.com/spirifoxy/teleworker/internal/api/v1"
 	tw "github.com/spirifoxy/teleworker/pkg/teleworker"
+	"github.com/spirifoxy/teleworker/server/internal/auth"
 )
 
+type UnauthorizedReq struct{}
+
+func (e *UnauthorizedReq) Error() string {
+	return "request authorization error"
+}
+
+type AccessDenied struct{}
+
+func (e *AccessDenied) Error() string {
+	return "you have no rights to perform that operation"
+}
+
 func (s *TWServer) Start(ctx context.Context, req *api.StartRequest) (*api.StartResponse, error) {
+	user, ok := auth.UsernameFromCtx(ctx)
+	if !ok {
+		return nil, &UnauthorizedReq{}
+	}
+
 	command := req.GetCommand()
 	args := req.GetArgs()
 	limits := &tw.Limits{
@@ -22,6 +40,7 @@ func (s *TWServer) Start(ctx context.Context, req *api.StartRequest) (*api.Start
 		command,
 		args,
 		tw.WithLimits(limits),
+		tw.WithUsername(user.Name),
 	)
 	if err != nil {
 		return nil, err
@@ -43,12 +62,21 @@ func (s *TWServer) Start(ctx context.Context, req *api.StartRequest) (*api.Start
 }
 
 func (s *TWServer) Stop(ctx context.Context, req *api.StopRequest) (*api.StopResponse, error) {
+	user, ok := auth.UsernameFromCtx(ctx)
+	if !ok {
+		return nil, &UnauthorizedReq{}
+	}
+
 	id := req.GetJobId()
 
 	var err error
 	job, err := s.store.Get(id)
 	if err != nil {
 		return nil, err
+	}
+
+	if user.Name != job.User {
+		return nil, &AccessDenied{}
 	}
 
 	err = job.Stop()

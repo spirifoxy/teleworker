@@ -9,7 +9,9 @@
 TeleWorker is a job worker service solution, which includes a library for managing jobs, a server using the library and a simple CLI for the communication with the server. 
 
 ## Build
-TBD
+```
+make build
+```
 
 ## Usage
 Everything can be managed via the command line, no advance preparation is required.
