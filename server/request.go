@@ -21,8 +21,10 @@ func (e *AccessDenied) Error() string {
 	return "you have no rights to perform that operation"
 }
 
+var UsernameFromCtx = auth.UsernameFromCtx
+
 func (s *TWServer) Start(ctx context.Context, req *api.StartRequest) (*api.StartResponse, error) {
-	user, ok := auth.UsernameFromCtx(ctx)
+	user, ok := UsernameFromCtx(ctx)
 	if !ok {
 		return nil, &UnauthorizedReq{}
 	}
@@ -62,7 +64,7 @@ func (s *TWServer) Start(ctx context.Context, req *api.StartRequest) (*api.Start
 }
 
 func (s *TWServer) Stop(ctx context.Context, req *api.StopRequest) (*api.StopResponse, error) {
-	user, ok := auth.UsernameFromCtx(ctx)
+	user, ok := UsernameFromCtx(ctx)
 	if !ok {
 		return nil, &UnauthorizedReq{}
 	}

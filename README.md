@@ -8,9 +8,21 @@
 
 TeleWorker is a job worker service solution, which includes a library for managing jobs, a server using the library and a simple CLI for the communication with the server. 
 
+```
+❗IMPORTANT❗
+It is required to start the server as sudo in order to let it manage cgroup functionality.
+Otherwise tasks creation will fail with "permission denied" errors written to the task error stream.
+```
+
 ## Build
 ```
 make build
+```
+
+## Testing
+Simply run
+```
+make test
 ```
 
 ## Usage

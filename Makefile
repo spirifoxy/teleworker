@@ -1,4 +1,4 @@
-.PHONY: api vendor build certgen
+.PHONY: api vendor build test certgen
 
 OUT_DIR=./out
 SEC_DIR=./security
@@ -16,6 +16,10 @@ vendor:
 build:
 	go build -o ${OUT_DIR}/teleworker ./client
 	go build -o ${OUT_DIR}/twserver ./server
+
+test:
+	go vet ./...
+	go test -v ./... -race
 
 certgen:
 	openssl genpkey -algorithm ed25519 > ${SEC_DIR}/ca-key.pem
